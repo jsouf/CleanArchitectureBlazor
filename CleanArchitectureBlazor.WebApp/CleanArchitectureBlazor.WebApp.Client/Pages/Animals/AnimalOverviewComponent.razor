@@ -1,0 +1,83 @@
+﻿@using CleanArchitectureBlazor.Application.Common.Models
+@using CleanArchitectureBlazor.Domain.Entities
+
+@page "/animals"
+@inject HttpClient Http
+@inject NavigationManager NavigationManager
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+<PageTitle>Weather</PageTitle>
+
+<h1>Animaux</h1>
+
+@if (Animals.Count == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Birthdate</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var animal in Animals)
+            {
+                <tr>
+                    <td>@animal.Id</td>
+                    <td>@animal.Name</td>
+                    <td>@animal.Birthdate.ToShortDateString()</td>
+                    <td>
+                        <button class="btn btn-primary" @onclick="@(() => EditAnimal(animal.Id))">Edit</button>
+                        <button class="btn btn-danger" @onclick="@(() => DeleteAnimal(animal.Id))">Delete</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<button class="btn btn-primary" @onclick="@(() => AddAnimal())">Add a new animal</button>
+
+@code {
+    List<Animal> Animals = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Http.GetFromJsonAsync<List<Animal>>("api/animals");
+        if (result is not null)
+        {
+            Animals = result;
+        }
+    }
+
+    void AddAnimal()
+    {
+        NavigationManager.NavigateTo("animals/edit");
+    }
+
+    void EditAnimal(int id)
+    {
+        NavigationManager.NavigateTo($"animals/{id}/edit");
+    }
+
+    async Task DeleteAnimal(int id)
+    {
+        await Http.DeleteAsync($"api/animals/{id}");
+    }
+
+    async Task FetchAnimals()
+    {
+        var result = await Http.GetFromJsonAsync<List<Animal>>("api/animals");
+
+        if(result is not null)
+        {
+            Animals = result;
+        }
+    }
+}

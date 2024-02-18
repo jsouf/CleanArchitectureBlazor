@@ -1,0 +1,63 @@
+﻿@using CleanArchitectureBlazor.Domain.Entities
+
+@page "/animals/edit"
+@page "/animals/{id:int}/edit"
+@inject HttpClient Http
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+@if (IsEdit)
+{
+    <h3>Edit @Animal?.Name</h3>
+}
+else
+{
+    <h3>Create Animal</h3>
+}
+
+<EditForm Model="Animal" OnSubmit="HandleSubmit">
+    <div>
+        <label for="name">Name</label>
+        <InputText id="name" @bind-Value="Animal.Name" class="form-control" />
+    </div>
+    <div>
+        <label for="birthdate">Birthdate</label>
+        <InputDate id="birthdate" @bind-Value="Animal.Birthdate" disabled="@IsEdit" class="form-control" />
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-2">Save</button>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+    public Animal Animal { get; set; } = new();
+
+    public bool IsEdit => Id > 0;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (IsEdit)
+        {
+            var result = await Http.GetFromJsonAsync<Animal>($"api/animals/{Id}");
+
+            if (result is not null)
+            {
+                Animal = result;
+            }
+        }
+    }
+
+    async Task HandleSubmit()
+    {
+        if (IsEdit)
+        {
+            var result = await Http.PutAsJsonAsync($"api/animals/{Id}", Animal);
+            Animal = await result.Content.ReadFromJsonAsync<Animal>();
+        }
+        else
+        {
+            var result = await Http.PostAsJsonAsync($"api/animals", Animal);
+            Animal = await result.Content.ReadFromJsonAsync<Animal>();
+    }
+    }
+}
